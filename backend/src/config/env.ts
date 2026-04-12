@@ -8,7 +8,9 @@ const envSchema = z.object({
   REDIS_URL: z.string().optional(),
 
   JWT_SECRET: z.string().min(16, 'JWT_SECRET must be at least 16 chars'),
-  JWT_EXPIRES_IN: z.string().default('7d'),
+  JWT_EXPIRES_IN: z.string().default('15m'),
+  JWT_REFRESH_SECRET: z.string().min(16, 'JWT_REFRESH_SECRET must be at least 16 chars'),
+  JWT_REFRESH_EXPIRES_IN: z.string().default('30d'),
 
   FACEBOOK_APP_SECRET: z.string().min(1, 'FACEBOOK_APP_SECRET is required'),
   FACEBOOK_VERIFY_TOKEN: z.string().min(1, 'FACEBOOK_VERIFY_TOKEN is required'),
@@ -36,6 +38,8 @@ export const env = {
 
   jwtSecret: parsed.data.JWT_SECRET,
   jwtExpiresIn: parsed.data.JWT_EXPIRES_IN,
+  jwtRefreshSecret: parsed.data.JWT_REFRESH_SECRET,
+  jwtRefreshExpiresIn: parsed.data.JWT_REFRESH_EXPIRES_IN,
 
   facebookAppSecret: parsed.data.FACEBOOK_APP_SECRET,
   facebookVerifyToken: parsed.data.FACEBOOK_VERIFY_TOKEN,

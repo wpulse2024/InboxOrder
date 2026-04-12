@@ -20,7 +20,7 @@ const tenantSchema = new Schema<ITenant>(
   {
     name: { type: String, required: true },
     pageId: { type: String, required: true, unique: true, index: true },
-    accessToken: { type: String, required: true },
+    accessToken: { type: String, required: false, default: '' },
     webhookVerifyToken: { type: String, required: true },
     isActive: { type: Boolean, default: true, index: true },
     settings: {

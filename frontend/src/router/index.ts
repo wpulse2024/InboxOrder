@@ -58,8 +58,14 @@ const router = createRouter({
   ],
 });
 
-router.beforeEach((to) => {
+router.beforeEach(async (to) => {
   const auth = useAuthStore();
+
+  // Hydrate user on first navigation after page reload
+  if (auth.isAuthenticated && !auth.user) {
+    await auth.init();
+  }
+
   if (!to.meta.public && !auth.isAuthenticated) {
     return { name: 'login', query: { redirect: to.fullPath } };
   }

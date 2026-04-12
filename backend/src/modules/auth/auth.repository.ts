@@ -1,6 +1,7 @@
 import bcrypt from 'bcryptjs';
 import { User, IUser } from '../../models/User';
 import { Tenant, ITenant } from '../../models/Tenant';
+import { RefreshToken, IRefreshToken } from '../../models/RefreshToken';
 import { AppError } from '../../middleware/errorHandler';
 
 export async function findUserByEmail(
@@ -34,7 +35,7 @@ export async function createUserAndTenant(data: {
     email: data.email.toLowerCase(),
     passwordHash,
     name: data.name,
-    role: 'admin',
+    role: 'owner', // first user who registers owns the tenant
   });
 
   return { user, tenant };
@@ -46,4 +47,31 @@ export async function verifyPassword(user: IUser, password: string): Promise<boo
 
 export async function findTenantById(tenantId: string): Promise<ITenant | null> {
   return Tenant.findById(tenantId);
+}
+
+export async function updateLastLogin(userId: string): Promise<void> {
+  await User.findByIdAndUpdate(userId, { lastLoginAt: new Date() });
+}
+
+// ─── Refresh Token Operations ─────────────────────────────────────────────────
+
+export async function storeRefreshToken(
+  userId: string,
+  tenantId: string,
+  tokenHash: string,
+  expiresAt: Date
+): Promise<IRefreshToken> {
+  return RefreshToken.create({ userId, tenantId, tokenHash, expiresAt });
+}
+
+export async function findRefreshToken(tokenHash: string): Promise<IRefreshToken | null> {
+  return RefreshToken.findOne({ tokenHash });
+}
+
+export async function deleteRefreshToken(tokenHash: string): Promise<void> {
+  await RefreshToken.deleteOne({ tokenHash });
+}
+
+export async function deleteAllUserRefreshTokens(userId: string): Promise<void> {
+  await RefreshToken.deleteMany({ userId });
 }
