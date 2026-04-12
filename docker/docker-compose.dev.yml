@@ -1,0 +1,30 @@
+version: '3.9'
+
+# Development override: only spin up infrastructure (MongoDB + Redis)
+# Run backend and frontend locally with npm run dev
+
+services:
+  mongo:
+    image: mongo:7.0
+    container_name: inboxorder_mongo_dev
+    restart: unless-stopped
+    ports:
+      - '27017:27017'
+    volumes:
+      - mongo_dev_data:/data/db
+    environment:
+      MONGO_INITDB_DATABASE: inboxorder
+
+  redis:
+    image: redis:7.2-alpine
+    container_name: inboxorder_redis_dev
+    restart: unless-stopped
+    ports:
+      - '6379:6379'
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_dev_data:/data
+
+volumes:
+  mongo_dev_data:
+  redis_dev_data:
