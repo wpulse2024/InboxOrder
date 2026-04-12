@@ -79,7 +79,7 @@ export async function saveCorrection(
 ): Promise<IOrder | null> {
   return Order.findOneAndUpdate(
     { _id: orderId, tenantId },
-    { ...corrections, parsedBy: 'manual' },
+    { ...corrections, parsedBy: 'manual', correctedAt: new Date() },
     { new: true }
   );
 }

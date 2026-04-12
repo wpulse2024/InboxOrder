@@ -5,9 +5,18 @@ import { connectDB, disconnectDB } from './config/db';
 import { initSocket } from './config/socket';
 import { env } from './config/env';
 import { logger } from './utils/logger';
+import { recoverUnprocessedMessages } from './queue/webhookRetryWorker';
+import { startMessageWorker, stopMessageWorker } from './queue/messageWorker';
+import { closeMessageQueue } from './queue/queues';
 
 async function main() {
   await connectDB();
+
+  // Start BullMQ worker before recovery so re-enqueued jobs are picked up immediately
+  startMessageWorker();
+
+  // Re-enqueue any messages saved to DB but missing from Redis (Redis-outage recovery)
+  await recoverUnprocessedMessages();
 
   const app = createApp();
   const httpServer = http.createServer(app);
@@ -22,6 +31,8 @@ async function main() {
   const shutdown = async (signal: string) => {
     logger.info({ signal }, 'Shutdown signal received');
     httpServer.close(async () => {
+      await stopMessageWorker();
+      await closeMessageQueue();
       await disconnectDB();
       logger.info('Graceful shutdown complete');
       process.exit(0);

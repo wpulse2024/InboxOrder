@@ -59,14 +59,14 @@ export async function register(data: {
   name: string;
   tenantName: string;
 }): Promise<{ accessToken: string; refreshToken: string }> {
-  const existing = await authRepo.findUserByEmail(data.email, '');
+  const existing = await authRepo.findUserByEmailGlobal(data.email);
   if (existing) throw new AppError('Email already registered', 409);
 
   const { user, tenant } = await authRepo.createUserAndTenant(data);
 
   const payload: JwtPayload = {
-    userId: (user._id as string).toString(),
-    tenantId: (tenant._id as string).toString(),
+    userId: user._id.toString(),
+    tenantId: tenant._id.toString(),
     role: user.role as Role,
   };
 
@@ -101,7 +101,7 @@ export async function login(data: {
   if (!valid) throw new AppError('Invalid credentials', 401);
 
   const payload: JwtPayload = {
-    userId: (user._id as string).toString(),
+    userId: user._id.toString(),
     tenantId: user.tenantId.toString(),
     role: user.role as Role,
   };
@@ -142,7 +142,7 @@ export async function refresh(
   }
 
   const payload: JwtPayload = {
-    userId: (user._id as string).toString(),
+    userId: user._id.toString(),
     tenantId: user.tenantId.toString(),
     role: user.role as Role,
   };

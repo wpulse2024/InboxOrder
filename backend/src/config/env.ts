@@ -5,7 +5,7 @@ const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
 
   MONGODB_URI: z.string().min(1, 'MONGODB_URI is required'),
-  REDIS_URL: z.string().optional(),
+  REDIS_URL: z.string().min(1, 'REDIS_URL is required'),
 
   JWT_SECRET: z.string().min(16, 'JWT_SECRET must be at least 16 chars'),
   JWT_EXPIRES_IN: z.string().default('15m'),
@@ -34,7 +34,7 @@ export const env = {
   isDev: parsed.data.NODE_ENV === 'development',
 
   mongodbUri: parsed.data.MONGODB_URI,
-  redisUrl: parsed.data.REDIS_URL ?? '',
+  redisUrl: parsed.data.REDIS_URL,
 
   jwtSecret: parsed.data.JWT_SECRET,
   jwtExpiresIn: parsed.data.JWT_EXPIRES_IN,

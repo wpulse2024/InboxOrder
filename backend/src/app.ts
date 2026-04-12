@@ -11,6 +11,7 @@ import customersRoutes from './modules/customers/customers.routes';
 import analyticsRoutes from './modules/analytics/analytics.routes';
 import settingsRoutes from './modules/settings/settings.routes';
 import notificationsRoutes from './modules/notifications/notifications.routes';
+import facebookRoutes from './modules/facebook/facebook.routes';
 
 export function createApp() {
   const app = express();
@@ -52,6 +53,7 @@ export function createApp() {
   app.use('/api/analytics', analyticsRoutes);
   app.use('/api/settings', settingsRoutes);
   app.use('/api/notifications', notificationsRoutes);
+  app.use('/api/facebook', facebookRoutes);
 
   // Global error handler — must be last
   app.use(errorHandler);

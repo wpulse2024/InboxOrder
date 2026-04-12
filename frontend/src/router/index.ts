@@ -1,6 +1,13 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 
+declare module 'vue-router' {
+  interface RouteMeta {
+    public?: boolean;
+    requiresAuth?: boolean;
+  }
+}
+
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [

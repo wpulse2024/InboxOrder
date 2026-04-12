@@ -1,20 +1,13 @@
-import { NotificationLog } from '../../models/NotificationLog';
 import { AppError } from '../../middleware/errorHandler';
 import { emitNotification } from '../../realtime/emitters';
+import * as repo from './notifications.repository';
 
 export async function getNotifications(tenantId: string, unreadOnly = false) {
-  const query: Record<string, unknown> = { tenantId };
-  if (unreadOnly) query.read = false;
-
-  return NotificationLog.find(query).sort({ createdAt: -1 }).limit(50).lean();
+  return repo.findNotifications(tenantId, unreadOnly);
 }
 
 export async function markRead(notificationId: string, tenantId: string) {
-  const notification = await NotificationLog.findOneAndUpdate(
-    { _id: notificationId, tenantId },
-    { read: true },
-    { new: true }
-  );
+  const notification = await repo.markNotificationRead(notificationId, tenantId);
   if (!notification) throw new AppError('Notification not found', 404);
   return notification;
 }
@@ -25,7 +18,7 @@ export async function createNotification(
   message: string,
   metadata?: Record<string, unknown>
 ) {
-  const notification = await NotificationLog.create({ tenantId, type, message, metadata });
+  const notification = await repo.insertNotification(tenantId, type, message, metadata);
   emitNotification(tenantId, notification.toObject());
   return notification;
 }

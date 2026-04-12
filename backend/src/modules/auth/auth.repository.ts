@@ -11,6 +11,10 @@ export async function findUserByEmail(
   return User.findOne({ email: email.toLowerCase(), tenantId });
 }
 
+export async function findUserByEmailGlobal(email: string): Promise<IUser | null> {
+  return User.findOne({ email: email.toLowerCase() });
+}
+
 export async function findUserById(userId: string): Promise<IUser | null> {
   return User.findById(userId);
 }

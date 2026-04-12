@@ -1,11 +1,11 @@
 import crypto from 'crypto';
 import { env } from '../../config/env';
-import { Message } from '../../models/Message';
 import { Tenant } from '../../models/Tenant';
-import { WebhookLog } from '../../models/WebhookLog';
-import { processMessage } from '../../queue/messageProcessor';
+import { findActivePageById, findPageByVerifyToken } from '../facebook/facebook.service';
+import { enqueueMessage } from '../../queue/queues';
 import { logger } from '../../utils/logger';
 import { AppError } from '../../middleware/errorHandler';
+import * as repo from './webhook.repository';
 
 export function verifyFacebookSignature(rawBody: Buffer, signature: string): boolean {
   const expected = `sha256=${crypto
@@ -19,6 +19,24 @@ export function verifyFacebookSignature(rawBody: Buffer, signature: string): boo
   }
 }
 
+/**
+ * Resolves the tenantId for a given Facebook pageId.
+ *
+ * Lookup order:
+ *  1. FacebookPage collection (multi-page model — new)
+ *  2. Tenant.pageId field (legacy single-page model — fallback)
+ *
+ * Returns null when no tenant is found for the pageId.
+ */
+async function resolveTenantId(pageId: string): Promise<string | null> {
+  const fbPage = await findActivePageById(pageId);
+  if (fbPage) return fbPage.tenantId.toString();
+
+  // Legacy fallback: tenants whose single pageId was stored directly on the Tenant document
+  const legacyTenant = await Tenant.findOne({ pageId }, { _id: 1 }).lean();
+  return legacyTenant ? legacyTenant._id.toString() : null;
+}
+
 export async function handleWebhookEvent(payload: Record<string, unknown>): Promise<void> {
   const entries = (payload.entry as unknown[]) ?? [];
 
@@ -27,8 +45,8 @@ export async function handleWebhookEvent(payload: Record<string, unknown>): Prom
     const pageId = e.id as string;
     const messaging = (e.messaging as unknown[]) ?? [];
 
-    const tenant = await Tenant.findOne({ pageId });
-    if (!tenant) {
+    const tenantId = await resolveTenantId(pageId);
+    if (!tenantId) {
       logger.warn({ pageId }, 'No tenant found for pageId, skipping');
       continue;
     }
@@ -45,48 +63,59 @@ export async function handleWebhookEvent(payload: Record<string, unknown>): Prom
       if (!text.trim()) continue;
 
       // Idempotency: skip duplicate webhook deliveries
-      const exists = await Message.exists({ tenantId: tenant._id, fbMessageId });
+      const exists = await repo.messageExists(tenantId, fbMessageId);
       if (exists) {
         logger.debug({ fbMessageId }, 'Duplicate message, skipping');
         continue;
       }
 
-      const savedMsg = await Message.create({
-        tenantId: tenant._id,
+      const savedMsg = await repo.createMessage({
+        tenantId,
         fbMessageId,
         senderId,
         text,
         rawPayload: msg as Record<string, unknown>,
-        processed: false,
       });
 
-      // Fire-and-forget: webhook must return within 5s
-      setImmediate(() => {
-        processMessage(savedMsg._id.toString(), tenant._id.toString()).catch((err) =>
-          logger.error({ err, messageId: savedMsg._id }, 'Message processing failed')
-        );
-      });
-
-      logger.info({ messageId: savedMsg._id, tenantId: tenant._id }, 'Message queued for processing');
-
-      await WebhookLog.create({
-        tenantId: tenant._id,
+      const webhookLog = await repo.createWebhookLog({
+        tenantId,
+        messageId: savedMsg._id,
         eventType: 'message',
         payload: msg as Record<string, unknown>,
         statusCode: 200,
-        retries: 0,
       });
+
+      const msgId = savedMsg._id.toString();
+      const logId = webhookLog._id.toString();
+
+      logger.info({ messageId: msgId, tenantId }, 'Message stored, enqueuing for processing');
+
+      // Enqueue to BullMQ — returns immediately, worker handles retries.
+      await enqueueMessage(msgId, tenantId, logId);
     }
   }
 }
 
-export function verifyChallenge(
+/**
+ * Verifies the Facebook webhook challenge.
+ *
+ * Accepts:
+ *  1. The global app-level FACEBOOK_VERIFY_TOKEN (env var)
+ *  2. Any per-page verify token stored in the FacebookPage collection
+ */
+export async function verifyChallenge(
   mode: string,
   token: string,
   challenge: string
-): string {
-  if (mode === 'subscribe' && token === env.facebookVerifyToken) {
-    return challenge;
-  }
+): Promise<string> {
+  if (mode !== 'subscribe') throw new AppError('Webhook verification failed', 403);
+
+  // Fast path: app-level token
+  if (token === env.facebookVerifyToken) return challenge;
+
+  // Per-page token: look up in FacebookPage collection
+  const page = await findPageByVerifyToken(token);
+  if (page) return challenge;
+
   throw new AppError('Webhook verification failed', 403);
 }

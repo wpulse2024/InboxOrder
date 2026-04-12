@@ -1,9 +1,9 @@
-import { Tenant } from '../../models/Tenant';
 import { AppError } from '../../middleware/errorHandler';
-import { encrypt, decrypt } from '../../utils/crypto';
+import { encrypt } from '../../utils/crypto';
+import * as repo from './settings.repository';
 
 export async function getSettings(tenantId: string) {
-  const tenant = await Tenant.findById(tenantId).select('-accessToken').lean();
+  const tenant = await repo.findTenantById(tenantId);
   if (!tenant) throw new AppError('Tenant not found', 404);
   return tenant;
 }
@@ -20,11 +20,7 @@ export async function updateSettings(
     };
   }>
 ) {
-  const tenant = await Tenant.findByIdAndUpdate(
-    tenantId,
-    { $set: settings },
-    { new: true }
-  ).select('-accessToken');
+  const tenant = await repo.updateTenant(tenantId, settings);
   if (!tenant) throw new AppError('Tenant not found', 404);
   return tenant;
 }
@@ -35,18 +31,12 @@ export async function connectFacebook(
   accessToken: string
 ) {
   const encrypted = encrypt(accessToken);
-  const tenant = await Tenant.findByIdAndUpdate(
-    tenantId,
-    { pageId, accessToken: encrypted },
-    { new: true }
-  ).select('-accessToken');
+  const tenant = await repo.updatePageConnection(tenantId, pageId, encrypted);
   if (!tenant) throw new AppError('Tenant not found', 404);
   return { message: 'Facebook page connected', pageId };
 }
 
 export async function disconnectFacebook(tenantId: string) {
-  await Tenant.findByIdAndUpdate(tenantId, {
-    $set: { pageId: `disconnected_${Date.now()}`, accessToken: '' },
-  });
+  await repo.clearPageConnection(tenantId);
   return { message: 'Facebook page disconnected' };
 }

@@ -1,18 +1,7 @@
-import { Types } from 'mongoose';
-import { Order } from '../../models/Order';
+import * as repo from './analytics.repository';
 
 export async function getSummary(tenantId: string) {
-  const tid = new Types.ObjectId(tenantId);
-  const result = await Order.aggregate([
-    { $match: { tenantId: tid } },
-    {
-      $group: {
-        _id: '$status',
-        count: { $sum: 1 },
-        revenue: { $sum: { $ifNull: ['$totalAmount', 0] } },
-      },
-    },
-  ]);
+  const result = await repo.aggregateSummary(tenantId);
 
   const summary: Record<string, { count: number; revenue: number }> = {};
   let totalOrders = 0;
@@ -31,25 +20,11 @@ export async function getSummary(tenantId: string) {
 }
 
 export async function getTopProducts(tenantId: string, limit = 10) {
-  const tid = new Types.ObjectId(tenantId);
-  return Order.aggregate([
-    { $match: { tenantId: tid } },
-    { $unwind: '$items' },
-    { $group: { _id: '$items.product', count: { $sum: '$items.quantity' }, orders: { $sum: 1 } } },
-    { $sort: { count: -1 } },
-    { $limit: limit },
-    { $project: { product: '$_id', count: 1, orders: 1, _id: 0 } },
-  ]);
+  return repo.aggregateTopProducts(tenantId, limit);
 }
 
 export async function getPeakHours(tenantId: string) {
-  const tid = new Types.ObjectId(tenantId);
-  return Order.aggregate([
-    { $match: { tenantId: tid } },
-    { $group: { _id: { $hour: '$createdAt' }, count: { $sum: 1 } } },
-    { $sort: { _id: 1 } },
-    { $project: { hour: '$_id', count: 1, _id: 0 } },
-  ]);
+  return repo.aggregatePeakHours(tenantId);
 }
 
 export async function getConversion(tenantId: string) {

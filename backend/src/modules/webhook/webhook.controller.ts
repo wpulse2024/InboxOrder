@@ -11,7 +11,7 @@ export async function handlePost(req: Request, res: Response): Promise<void> {
   const valid = webhookService.verifyFacebookSignature(rawBody, signature);
   if (!valid) throw new AppError('Invalid signature', 403);
 
-  // Respond to Facebook immediately — processing happens async in queue
+  // Respond to Facebook immediately — processing happens async with retry support
   res.sendStatus(200);
 
   try {
@@ -21,11 +21,11 @@ export async function handlePost(req: Request, res: Response): Promise<void> {
   }
 }
 
-export function handleGet(req: Request, res: Response): void {
+export async function handleGet(req: Request, res: Response): Promise<void> {
   const mode = req.query['hub.mode'] as string;
   const token = req.query['hub.verify_token'] as string;
   const challenge = req.query['hub.challenge'] as string;
 
-  const result = webhookService.verifyChallenge(mode, token, challenge);
+  const result = await webhookService.verifyChallenge(mode, token, challenge);
   res.send(result);
 }

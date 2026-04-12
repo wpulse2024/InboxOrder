@@ -2,6 +2,7 @@ import { Schema, model, Document, Types } from 'mongoose';
 
 export interface IWebhookLog extends Document {
   tenantId: Types.ObjectId;
+  messageId?: Types.ObjectId; // ref → Message; set for message-type events
   eventType: string;
   payload: Record<string, unknown>;
   statusCode: number;
@@ -14,6 +15,7 @@ export interface IWebhookLog extends Document {
 const webhookLogSchema = new Schema<IWebhookLog>(
   {
     tenantId: { type: Schema.Types.ObjectId, ref: 'Tenant', required: true, index: true },
+    messageId: { type: Schema.Types.ObjectId, ref: 'Message', index: true },
     eventType: { type: String, required: true, index: true },
     payload: { type: Schema.Types.Mixed, required: true },
     statusCode: { type: Number, required: true },

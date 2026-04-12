@@ -5,7 +5,8 @@ import * as ctrl from './webhook.controller';
 
 const router = Router();
 
-router.get('/facebook', ctrl.handleGet);
+// GET: Facebook webhook challenge verification (now async — supports per-page verify tokens)
+router.get('/facebook', asyncHandler(ctrl.handleGet));
 router.post('/facebook', webhookRateLimiter, asyncHandler(ctrl.handlePost));
 
 export default router;
