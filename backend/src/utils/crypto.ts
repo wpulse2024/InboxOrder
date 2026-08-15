@@ -2,9 +2,22 @@ import crypto from 'crypto';
 
 const ALGORITHM = 'aes-256-gcm';
 const IV_LENGTH = 16;
-const KEY = Buffer.from(
-  process.env.ENCRYPTION_KEY ?? crypto.randomBytes(32).toString('hex').slice(0, 32)
-);
+
+if (!process.env.ENCRYPTION_KEY) {
+  throw new Error(
+    'ENCRYPTION_KEY env var is not set. A random key would be regenerated on every ' +
+    'restart, silently making all previously-encrypted data undecryptable. Set a ' +
+    'persistent 32-byte key (e.g. `openssl rand -hex 16`, truncated/padded to 32 chars).'
+  );
+}
+
+const KEY = Buffer.from(process.env.ENCRYPTION_KEY);
+
+if (KEY.length !== 32) {
+  throw new Error(
+    `ENCRYPTION_KEY must be exactly 32 bytes for aes-256-gcm, got ${KEY.length}.`
+  );
+}
 
 export function encrypt(text: string): string {
   const iv = crypto.randomBytes(IV_LENGTH);

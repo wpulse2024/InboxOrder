@@ -69,8 +69,8 @@ const PRODUCT_PATTERNS: RegExp[] = [
   /([a-zA-Z\u0980-\u09FF][a-zA-Z\u0980-\u09FF\s]{1,40}?)\s+(?:দিন|দাও|দিবেন|পাঠান)\b/,
   // "want / need / buy / get [a/an/some] X"
   /(?:want|need|buy|get)\s+(?:a\s+|an\s+|some\s+)?([a-zA-Z][a-zA-Z\s]{1,40}?)(?=\s*\d|\s*pcs|\s*[,.]|\s+(?:please|from|for)|\s*$)/i,
-  // "N টা/pcs X" — quantity precedes product
-  /\d+\s*(?:টা|টি|পিস|pcs|pieces?)\s+([a-zA-Z\u0980-\u09FF][a-zA-Z\u0980-\u09FF\s]{1,40}?)(?=\s*[,।]|\s*$)/i,
+  // "N টা/pcs/ta X" — quantity precedes product (includes romanised "ta"/"ti")
+  /\d+\s*(?:টা|টি|পিস|pcs|pieces?|ta|ti)\s+([a-zA-Z\u0980-\u09FF][a-zA-Z\u0980-\u09FF\s]{1,40}?)(?=\s+order\b|\s+korte\b|\s*[,।]|\s*$)/i,
 ];
 
 // ── Main parser ───────────────────────────────────────────────────────────────
