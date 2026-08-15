@@ -78,3 +78,10 @@ export async function findPageByVerifyToken(verifyToken: string): Promise<IFaceb
 export async function findActivePageById(pageId: string): Promise<IFacebookPage | null> {
   return repo.findActivePageByPageId(pageId);
 }
+
+/** Records whether the Graph API webhook subscription call for this page succeeded. */
+export async function markWebhookSubscribed(pageId: string, subscribed: boolean): Promise<void> {
+  const page = await repo.findPageByPageId(pageId);
+  if (!page) return;
+  await repo.setWebhookSubscribed(page, subscribed);
+}

@@ -5,7 +5,7 @@ import { env } from '../../config/env';
 import { redisClient } from '../../config/redisClient';
 import { AppError } from '../../middleware/errorHandler';
 import { logger } from '../../utils/logger';
-import * as settingsService from './settings.service';
+import * as facebookService from '../facebook/facebook.service';
 
 const GRAPH_VERSION = 'v21.0';
 const GRAPH_URL = `https://graph.facebook.com/${GRAPH_VERSION}`;
@@ -88,9 +88,20 @@ async function subscribePageToWebhook(page: GraphPage): Promise<void> {
     url.searchParams.set('access_token', page.access_token);
     const response = await fetch(url.toString(), { method: 'POST' });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    await facebookService.markWebhookSubscribed(page.id, true);
   } catch (err) {
     logger.warn({ err, pageId: page.id }, 'Failed to auto-subscribe page to webhook');
   }
+}
+
+/** Connects one Graph API page into the multi-page FacebookPage collection and subscribes its webhook. */
+async function connectPage(
+  tenantId: string,
+  page: GraphPage
+): Promise<{ pageId: string; pageName: string }> {
+  const result = await facebookService.addPage(tenantId, page.id, page.name, page.access_token, null);
+  await subscribePageToWebhook(page);
+  return { pageId: result.pageId, pageName: result.pageName };
 }
 
 function frontendRedirect(res: Response, query: Record<string, string>): void {
@@ -134,12 +145,12 @@ export async function handleFacebookOAuthCallback(req: Request, res: Response): 
 
     if (pages.length === 1) {
       const [page] = pages;
-      await settingsService.connectFacebook(tenantId, page.id, page.access_token);
-      await subscribePageToWebhook(page);
-      frontendRedirect(res, { fb_connected: '1', page: page.name });
+      const connected = await connectPage(tenantId, page);
+      frontendRedirect(res, { fb_connected: '1', page: connected.pageName });
       return;
     }
 
+    // Multiple managed Pages — let the user pick which ones to connect (one or many).
     await redisClient.set(pendingKey(tenantId), JSON.stringify(pages), 'EX', PENDING_TTL_SECONDS);
     frontendRedirect(res, { fb_select: '1' });
   } catch (err) {
@@ -157,23 +168,26 @@ export async function getPendingPages(req: Request, res: Response): Promise<void
   res.json({ pages: pages.map((p) => ({ pageId: p.id, pageName: p.name })) });
 }
 
-const selectSchema = z.object({ pageId: z.string().min(1) });
+const selectSchema = z.object({ pageIds: z.array(z.string().min(1)).min(1) });
 
-/** POST /api/settings/facebook/oauth/select — user picked which managed page to connect. */
+/** POST /api/settings/facebook/oauth/select — user picked one or more managed pages to connect. */
 export async function selectFacebookPage(req: Request, res: Response): Promise<void> {
-  const { pageId } = selectSchema.parse(req.body);
+  const { pageIds } = selectSchema.parse(req.body);
   const tenantId = req.user!.tenantId;
 
   const raw = await redisClient.get(pendingKey(tenantId));
   if (!raw) throw new AppError('No pending Facebook pages — start the connection again', 404);
 
   const pages = JSON.parse(raw) as GraphPage[];
-  const page = pages.find((p) => p.id === pageId);
-  if (!page) throw new AppError('Selected page was not in the pending list', 404);
+  const selected = pages.filter((p) => pageIds.includes(p.id));
+  if (selected.length === 0) throw new AppError('Selected pages were not in the pending list', 404);
 
-  await settingsService.connectFacebook(tenantId, page.id, page.access_token);
-  await subscribePageToWebhook(page);
+  const connected = [];
+  for (const page of selected) {
+    connected.push(await connectPage(tenantId, page));
+  }
+
   await redisClient.del(pendingKey(tenantId));
 
-  res.json({ message: 'Facebook page connected', pageId: page.id, pageName: page.name });
+  res.json({ message: 'Facebook pages connected', pages: connected });
 }

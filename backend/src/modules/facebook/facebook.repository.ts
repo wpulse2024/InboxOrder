@@ -23,7 +23,7 @@ export async function findPageByVerifyToken(verifyToken: string): Promise<IFaceb
 export async function findPagesByTenant(
   tenantId: string
 ): Promise<Omit<IFacebookPage, 'accessToken'>[]> {
-  return FacebookPage.find({ tenantId })
+  return FacebookPage.find({ tenantId, isActive: true })
     .select('-accessToken')
     .lean() as unknown as Omit<IFacebookPage, 'accessToken'>[];
 }
@@ -65,7 +65,13 @@ export async function updatePageToken(
 }
 
 export async function deactivatePage(page: IFacebookPage): Promise<void> {
+  // Access is already gated on isActive (getDecryptedToken, findActivePageByPageId) —
+  // clearing accessToken here isn't needed and an empty string fails the schema's `required`.
   page.isActive = false;
-  page.accessToken = '';
+  await page.save();
+}
+
+export async function setWebhookSubscribed(page: IFacebookPage, value: boolean): Promise<void> {
+  page.webhookSubscribed = value;
   await page.save();
 }
