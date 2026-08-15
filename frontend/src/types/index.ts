@@ -63,5 +63,6 @@ export interface AuthUser {
   email: string;
   name: string;
   role: string;
+  isPlatformAdmin: boolean;
   tenant: { id: string; name: string; pageId: string } | null;
 }

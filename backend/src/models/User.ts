@@ -7,6 +7,7 @@ export interface IUser extends Document {
   name: string;
   role: 'owner' | 'admin' | 'staff';
   isActive: boolean;
+  isPlatformAdmin: boolean;
   lastLoginAt?: Date;
   createdAt: Date;
   updatedAt: Date;
@@ -20,6 +21,9 @@ const userSchema = new Schema<IUser>(
     name: { type: String, required: true },
     role: { type: String, enum: ['owner', 'admin', 'staff'], default: 'owner' },
     isActive: { type: Boolean, default: true },
+    // Cross-tenant flag — separate from the tenant-scoped `role` above. Grants access to
+    // platform-wide config (shared Facebook App credentials, AI settings) in /admin/config.
+    isPlatformAdmin: { type: Boolean, default: false },
     lastLoginAt: { type: Date },
   },
   { timestamps: true }

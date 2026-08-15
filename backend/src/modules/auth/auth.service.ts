@@ -68,6 +68,7 @@ export async function register(data: {
     userId: user._id.toString(),
     tenantId: tenant._id.toString(),
     role: user.role as Role,
+    isPlatformAdmin: user.isPlatformAdmin,
   };
 
   const { accessToken, refreshToken, refreshTokenHash, refreshExpiresAt } =
@@ -104,6 +105,7 @@ export async function login(data: {
     userId: user._id.toString(),
     tenantId: user.tenantId.toString(),
     role: user.role as Role,
+    isPlatformAdmin: user.isPlatformAdmin,
   };
 
   const { accessToken, refreshToken, refreshTokenHash, refreshExpiresAt } =
@@ -145,6 +147,7 @@ export async function refresh(
     userId: user._id.toString(),
     tenantId: user.tenantId.toString(),
     role: user.role as Role,
+    isPlatformAdmin: user.isPlatformAdmin,
   };
 
   // Rotate: revoke old token, issue new pair
@@ -193,6 +196,7 @@ export async function getMe(userId: string) {
     name: user.name,
     role: user.role,
     isActive: user.isActive,
+    isPlatformAdmin: user.isPlatformAdmin,
     lastLoginAt: user.lastLoginAt,
     tenant: tenant
       ? { id: tenant._id, name: tenant.name, pageId: tenant.pageId }

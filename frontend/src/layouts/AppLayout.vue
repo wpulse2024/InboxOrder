@@ -60,6 +60,19 @@
           </svg>
           Settings
         </RouterLink>
+
+        <!-- Admin config (platform admins only) -->
+        <RouterLink
+          v-if="authStore.user?.isPlatformAdmin"
+          to="/admin/config"
+          :class="navItemClass('/admin/config')"
+          @click="sidebarOpen = false"
+        >
+          <svg class="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          Platform Config
+        </RouterLink>
       </nav>
 
       <!-- User footer -->

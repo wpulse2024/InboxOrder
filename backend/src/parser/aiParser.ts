@@ -1,4 +1,4 @@
-import { env } from '../config/env';
+import { getPlatformConfig } from '../config/platformConfig';
 import { AiLog } from '../models/AiLog';
 import { logger } from '../utils/logger';
 import type { ParseResult } from './ruleParser';
@@ -88,23 +88,29 @@ export async function parseWithAI(
   messageId: string,
   tenantId: string
 ): Promise<ParseResult | null> {
+  const { aiApiKey, aiApiUrl, aiModel, aiTimeoutMs } = getPlatformConfig();
+  if (!aiApiKey) {
+    logger.warn({ messageId, tenantId }, 'AI parser skipped — no AI API key configured');
+    return null;
+  }
+
   const prompt = buildPrompt(text);
   const startMs = Date.now();
 
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), env.aiTimeoutMs);
+  const timeoutId = setTimeout(() => controller.abort(), aiTimeoutMs);
 
   try {
-    const response = await fetch(env.aiApiUrl, {
+    const response = await fetch(aiApiUrl, {
       method: 'POST',
       signal: controller.signal,
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': env.aiApiKey,
+        'x-api-key': aiApiKey,
         'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
-        model: env.aiModel,
+        model: aiModel,
         max_tokens: 256,
         messages: [{ role: 'user', content: prompt }],
       }),

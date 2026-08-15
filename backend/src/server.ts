@@ -4,13 +4,32 @@ import { createApp } from './app';
 import { connectDB, disconnectDB } from './config/db';
 import { initSocket } from './config/socket';
 import { env } from './config/env';
+import { loadPlatformConfig } from './config/platformConfig';
 import { logger } from './utils/logger';
 import { recoverUnprocessedMessages } from './queue/webhookRetryWorker';
 import { startMessageWorker, stopMessageWorker } from './queue/messageWorker';
 import { closeMessageQueue } from './queue/queues';
+import { User } from './models/User';
+
+/**
+ * One-time, idempotent: promotes the configured bootstrap email to isPlatformAdmin so
+ * there's always a first admin able to reach /admin/config on a fresh deploy. Safe to
+ * leave PLATFORM_ADMIN_BOOTSTRAP_EMAIL set permanently — no-ops once already granted.
+ */
+async function bootstrapPlatformAdmin() {
+  if (!env.platformAdminBootstrapEmail) return;
+  const user = await User.findOne({ email: env.platformAdminBootstrapEmail.toLowerCase() });
+  if (user && !user.isPlatformAdmin) {
+    user.isPlatformAdmin = true;
+    await user.save();
+    logger.info({ email: user.email }, 'Granted isPlatformAdmin via bootstrap email');
+  }
+}
 
 async function main() {
   await connectDB();
+  await loadPlatformConfig();
+  await bootstrapPlatformAdmin();
 
   // Start BullMQ worker before recovery so re-enqueued jobs are picked up immediately
   startMessageWorker();

@@ -3,6 +3,7 @@ import helmet from 'helmet';
 import cors from 'cors';
 import { apiRateLimiter } from './middleware/rateLimiter';
 import { errorHandler } from './middleware/errorHandler';
+import { getPlatformConfig } from './config/platformConfig';
 
 import authRoutes from './modules/auth/auth.routes';
 import webhookRoutes from './modules/webhook/webhook.routes';
@@ -13,6 +14,7 @@ import settingsRoutes from './modules/settings/settings.routes';
 import notificationsRoutes from './modules/notifications/notifications.routes';
 import facebookRoutes from './modules/facebook/facebook.routes';
 import facebookOAuthPublicRoutes from './modules/settings/facebookOAuthPublic.routes';
+import adminRoutes from './modules/admin/admin.routes';
 
 export function createApp() {
   const app = express();
@@ -21,7 +23,9 @@ export function createApp() {
   app.use(helmet());
   app.use(
     cors({
-      origin: process.env.FRONTEND_URL ?? '*',
+      // Read on every request (not captured at boot) so an admin-updated frontendUrl
+      // takes effect immediately — see config/platformConfig.ts.
+      origin: (_origin, callback) => callback(null, getPlatformConfig().frontendUrl ?? '*'),
       methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
       allowedHeaders: ['Content-Type', 'Authorization'],
     })
@@ -56,6 +60,7 @@ export function createApp() {
   app.use('/api/notifications', notificationsRoutes);
   app.use('/api/facebook', facebookRoutes);
   app.use('/api/facebook-oauth', facebookOAuthPublicRoutes);
+  app.use('/api/admin', adminRoutes);
 
   // Global error handler — must be last
   app.use(errorHandler);

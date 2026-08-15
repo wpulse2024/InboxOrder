@@ -67,6 +67,8 @@ async function seed(): Promise<void> {
       name: u.name,
       role: u.role,
       isActive: true,
+      // Local dev convenience: the demo owner can reach /admin/config without a separate bootstrap step.
+      isPlatformAdmin: u.role === 'owner',
     });
     console.log(`  [${u.role.padEnd(5)}] ${user.email}`);
   }

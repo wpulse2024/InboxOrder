@@ -1,5 +1,5 @@
 import crypto from 'crypto';
-import { env } from '../../config/env';
+import { getPlatformConfig } from '../../config/platformConfig';
 import { Tenant } from '../../models/Tenant';
 import { findActivePageById, findPageByVerifyToken } from '../facebook/facebook.service';
 import { enqueueMessage } from '../../queue/queues';
@@ -8,8 +8,10 @@ import { AppError } from '../../middleware/errorHandler';
 import * as repo from './webhook.repository';
 
 export function verifyFacebookSignature(rawBody: Buffer, signature: string): boolean {
+  const { facebookAppSecret } = getPlatformConfig();
+  if (!facebookAppSecret) return false;
   const expected = `sha256=${crypto
-    .createHmac('sha256', env.facebookAppSecret)
+    .createHmac('sha256', facebookAppSecret)
     .update(rawBody)
     .digest('hex')}`;
   try {
@@ -111,7 +113,9 @@ export async function verifyChallenge(
   if (mode !== 'subscribe') throw new AppError('Webhook verification failed', 403);
 
   // Fast path: app-level token
-  if (token === env.facebookVerifyToken) return challenge;
+  if (getPlatformConfig().facebookVerifyToken && token === getPlatformConfig().facebookVerifyToken) {
+    return challenge;
+  }
 
   // Per-page token: look up in FacebookPage collection
   const page = await findPageByVerifyToken(token);

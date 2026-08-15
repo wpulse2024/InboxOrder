@@ -9,6 +9,7 @@ export interface JwtPayload {
   userId: string;
   tenantId: string;
   role: Role;
+  isPlatformAdmin: boolean;
 }
 
 declare global {
@@ -46,4 +47,15 @@ export function requireRole(...roles: Role[]) {
     }
     next();
   };
+}
+
+/**
+ * Require the cross-tenant platform-admin flag. Must be used after `authenticate`.
+ * Distinct from `requireRole` — a tenant `owner` is not automatically a platform admin.
+ */
+export function requirePlatformAdmin(req: Request, _res: Response, next: NextFunction): void {
+  if (!req.user?.isPlatformAdmin) {
+    return next(new AppError('Platform admin access required', 403));
+  }
+  next();
 }

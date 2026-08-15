@@ -5,6 +5,7 @@ declare module 'vue-router' {
   interface RouteMeta {
     public?: boolean;
     requiresAuth?: boolean;
+    requiresPlatformAdmin?: boolean;
   }
 }
 
@@ -56,6 +57,12 @@ const router = createRouter({
           name: 'settings',
           component: () => import('@/views/SettingsView.vue'),
         },
+        {
+          path: 'admin/config',
+          name: 'admin-config',
+          component: () => import('@/views/AdminConfigView.vue'),
+          meta: { requiresPlatformAdmin: true },
+        },
       ],
     },
     {
@@ -77,6 +84,9 @@ router.beforeEach(async (to) => {
     return { name: 'login', query: { redirect: to.fullPath } };
   }
   if (to.name === 'login' && auth.isAuthenticated) {
+    return { name: 'dashboard' };
+  }
+  if (to.meta.requiresPlatformAdmin && !auth.user?.isPlatformAdmin) {
     return { name: 'dashboard' };
   }
 });

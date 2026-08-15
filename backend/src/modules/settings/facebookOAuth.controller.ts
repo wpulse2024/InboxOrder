@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import { z } from 'zod';
 import { env } from '../../config/env';
+import { getPlatformConfig } from '../../config/platformConfig';
 import { redisClient } from '../../config/redisClient';
 import { AppError } from '../../middleware/errorHandler';
 import { logger } from '../../utils/logger';
@@ -14,7 +15,15 @@ const SCOPES = ['pages_show_list', 'pages_messaging', 'pages_manage_metadata', '
 const PENDING_TTL_SECONDS = 600;
 
 function redirectUri(): string {
-  return `${env.appBaseUrl}/api/facebook-oauth/callback`;
+  return `${getPlatformConfig().appBaseUrl}/api/facebook-oauth/callback`;
+}
+
+function requireFacebookAppCreds(): { appId: string; appSecret: string } {
+  const { facebookAppId, facebookAppSecret } = getPlatformConfig();
+  if (!facebookAppId || !facebookAppSecret) {
+    throw new AppError('Facebook App is not configured yet — ask a platform admin to set it up in /admin/config', 503);
+  }
+  return { appId: facebookAppId, appSecret: facebookAppSecret };
 }
 
 function pendingKey(tenantId: string): string {
@@ -29,12 +38,14 @@ interface GraphPage {
 
 /** GET /api/settings/facebook/oauth/start — returns the FB login dialog URL for the frontend to navigate to. */
 export async function startFacebookOAuth(req: Request, res: Response): Promise<void> {
+  const { appId } = requireFacebookAppCreds();
+
   const state = jwt.sign({ tenantId: req.user!.tenantId, purpose: 'fb_oauth' }, env.jwtSecret, {
     expiresIn: '10m',
   });
 
   const url = new URL(OAUTH_DIALOG_URL);
-  url.searchParams.set('client_id', env.facebookAppId);
+  url.searchParams.set('client_id', appId);
   url.searchParams.set('redirect_uri', redirectUri());
   url.searchParams.set('state', state);
   url.searchParams.set('scope', SCOPES.join(','));
@@ -44,9 +55,10 @@ export async function startFacebookOAuth(req: Request, res: Response): Promise<v
 }
 
 async function exchangeCodeForUserToken(code: string): Promise<string> {
+  const { appId, appSecret } = requireFacebookAppCreds();
   const url = new URL(`${GRAPH_URL}/oauth/access_token`);
-  url.searchParams.set('client_id', env.facebookAppId);
-  url.searchParams.set('client_secret', env.facebookAppSecret);
+  url.searchParams.set('client_id', appId);
+  url.searchParams.set('client_secret', appSecret);
   url.searchParams.set('redirect_uri', redirectUri());
   url.searchParams.set('code', code);
 
@@ -57,10 +69,11 @@ async function exchangeCodeForUserToken(code: string): Promise<string> {
 }
 
 async function exchangeForLongLivedToken(shortLivedToken: string): Promise<string> {
+  const { appId, appSecret } = requireFacebookAppCreds();
   const url = new URL(`${GRAPH_URL}/oauth/access_token`);
   url.searchParams.set('grant_type', 'fb_exchange_token');
-  url.searchParams.set('client_id', env.facebookAppId);
-  url.searchParams.set('client_secret', env.facebookAppSecret);
+  url.searchParams.set('client_id', appId);
+  url.searchParams.set('client_secret', appSecret);
   url.searchParams.set('fb_exchange_token', shortLivedToken);
 
   const response = await fetch(url.toString());
@@ -105,7 +118,7 @@ async function connectPage(
 }
 
 function frontendRedirect(res: Response, query: Record<string, string>): void {
-  const url = new URL('/settings', env.frontendUrl);
+  const url = new URL('/settings', getPlatformConfig().frontendUrl);
   for (const [key, value] of Object.entries(query)) url.searchParams.set(key, value);
   res.redirect(url.toString());
 }
