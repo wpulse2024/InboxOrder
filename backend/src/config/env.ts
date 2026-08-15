@@ -12,8 +12,12 @@ const envSchema = z.object({
   JWT_REFRESH_SECRET: z.string().min(16, 'JWT_REFRESH_SECRET must be at least 16 chars'),
   JWT_REFRESH_EXPIRES_IN: z.string().default('30d'),
 
+  FACEBOOK_APP_ID: z.string().min(1, 'FACEBOOK_APP_ID is required'),
   FACEBOOK_APP_SECRET: z.string().min(1, 'FACEBOOK_APP_SECRET is required'),
   FACEBOOK_VERIFY_TOKEN: z.string().min(1, 'FACEBOOK_VERIFY_TOKEN is required'),
+
+  APP_BASE_URL: z.string().url().default('http://localhost:3000'),
+  FRONTEND_URL: z.string().url().default('http://localhost:5173'),
 
   AI_API_KEY: z.string().min(1, 'AI_API_KEY is required'),
   AI_API_URL: z.string().url('AI_API_URL must be a valid URL'),
@@ -41,8 +45,12 @@ export const env = {
   jwtRefreshSecret: parsed.data.JWT_REFRESH_SECRET,
   jwtRefreshExpiresIn: parsed.data.JWT_REFRESH_EXPIRES_IN,
 
+  facebookAppId: parsed.data.FACEBOOK_APP_ID,
   facebookAppSecret: parsed.data.FACEBOOK_APP_SECRET,
   facebookVerifyToken: parsed.data.FACEBOOK_VERIFY_TOKEN,
+
+  appBaseUrl: parsed.data.APP_BASE_URL,
+  frontendUrl: parsed.data.FRONTEND_URL,
 
   aiApiKey: parsed.data.AI_API_KEY,
   aiApiUrl: parsed.data.AI_API_URL,

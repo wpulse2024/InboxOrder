@@ -100,6 +100,7 @@ Every collection is scoped by `tenantId` — one Facebook page = one tenant. Not
 - **Hybrid parser, not just an LLM wrapper** — a fast rule-based extractor (Bangla + English, Bangladesh phone format) handles the obvious cases for free; AI is only called when confidence drops below threshold.
 - **Confidence-scored, human-correctable** — every parsed order keeps its original message and confidence score, and staff can edit and save corrections without losing the AI/rule audit trail.
 - **Real-time by default** — new orders, status changes, and webhook failures push to the dashboard over Socket.io the moment they happen.
+- **One-click Facebook connect** — OAuth login flow (not a raw Page ID/token form) walks a non-technical shop owner through picking their Page and auto-subscribes the webhook; no Graph API Explorer required.
 - **True multi-tenancy** — every collection, query, and socket room is scoped to `tenantId`; one deployment serves many Facebook pages safely.
 - **Analytics out of the box** — revenue, conversion rate, top products, and peak order hours computed via MongoDB aggregation pipelines.
 - **Resilient queues** — BullMQ workers with exponential backoff retries and dead-letter logging for both message processing and webhook delivery.
@@ -127,15 +128,21 @@ REDIS_URL=redis://localhost:6379
 JWT_SECRET=change_me_32_chars_minimum
 JWT_REFRESH_SECRET=change_me_32_chars_minimum
 
+FACEBOOK_APP_ID=your_fb_app_id
 FACEBOOK_APP_SECRET=your_fb_app_secret
 FACEBOOK_VERIFY_TOKEN=your_fb_verify_token
 
 AI_API_KEY=your_ai_api_key
 AI_API_URL=https://api.anthropic.com/v1/messages
 
+APP_BASE_URL=http://localhost:3000
+FRONTEND_URL=http://localhost:5173
+
 VITE_API_BASE_URL=http://localhost:3000/api
 VITE_SOCKET_URL=http://localhost:3000
 ```
+
+`FACEBOOK_APP_ID`/`FACEBOOK_APP_SECRET` come from a Meta App with the **Facebook Login for Business** and **Messenger** products added, with `pages_show_list`, `pages_messaging`, `pages_manage_metadata`, and `pages_read_engagement` permissions, and `{APP_BASE_URL}/api/facebook-oauth/callback` listed as a valid OAuth redirect URI.
 
 Seed a demo account, then start both apps:
 
