@@ -7,7 +7,8 @@
     "build": "tsc",
     "start": "node dist/server.js",
     "lint": "eslint src --ext .ts",
-    "seed": "ts-node --transpile-only src/seeds/seed.ts"
+    "seed": "ts-node --transpile-only src/seeds/seed.ts",
+    "seed:demo": "ts-node --transpile-only src/seeds/seedDemo.ts"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
