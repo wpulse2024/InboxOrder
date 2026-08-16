@@ -44,6 +44,14 @@ For small e-commerce sellers across South Asia, Facebook Messenger *is* the stor
 
 ![Store Profile](docs/screenshots/store-profile.png)
 
+**Add product — POS-style catalog entry form (name, price, SKU, category, description, image URL):**
+
+![Add product](docs/screenshots/add-product.png)
+
+**One-click Facebook connect — OAuth flow, no Page ID/token entry required:**
+
+![Facebook connect](docs/screenshots/facebook-connect.png)
+
 **Sign in:**
 
 ![Login](docs/screenshots/login.png)
