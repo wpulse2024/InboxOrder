@@ -52,6 +52,10 @@ For small e-commerce sellers across South Asia, Facebook Messenger *is* the stor
 
 ![Facebook connect](docs/screenshots/facebook-connect.png)
 
+**AI sales agent in Messenger — answers product questions (Bangla + English), confirms an order summary, then places it:**
+
+![AI sales agent chat](docs/screenshots/grok-agent-chat.png)
+
 **Sign in:**
 
 ![Login](docs/screenshots/login.png)
