@@ -32,13 +32,17 @@ For small e-commerce sellers across South Asia, Facebook Messenger *is* the stor
 |---|---|
 | ![Dashboard](docs/screenshots/dashboard.png) | ![Orders](docs/screenshots/orders.png) |
 
-**Order detail — original Messenger text, AI/rule source, editable items, one-click status change:**
+**Order detail — POS-style items (image, SKU, category, description, price, subtotal, total), original Messenger text, AI/rule source, one-click status change:**
 
 ![Order detail](docs/screenshots/order-detail.png)
 
 | Customers — auto-created from Messenger senders | Settings — parser + Facebook page connection |
 |---|---|
 | ![Customers](docs/screenshots/customers.png) | ![Settings](docs/screenshots/settings.png) |
+
+**Store Profile — product catalog (price, SKU, category, description, image) that powers the AI sales agent and gets snapshotted onto every order:**
+
+![Store Profile](docs/screenshots/store-profile.png)
 
 **Sign in:**
 

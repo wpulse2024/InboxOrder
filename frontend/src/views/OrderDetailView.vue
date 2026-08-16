@@ -52,11 +52,28 @@
               placeholder="Price"
             />
           </div>
-          <div v-if="item.sku || item.category" class="flex gap-2 text-xs text-gray-500">
-            <span v-if="item.sku" class="rounded bg-gray-100 px-1.5 py-0.5">SKU: {{ item.sku }}</span>
-            <span v-if="item.category" class="rounded bg-gray-100 px-1.5 py-0.5">{{ item.category }}</span>
+          <div class="flex gap-2">
+            <input
+              v-model="item.sku"
+              placeholder="SKU"
+              class="w-32 rounded-md border-gray-300 text-xs focus:border-brand-500 focus:ring-brand-500"
+            />
+            <input
+              v-model="item.category"
+              placeholder="Category"
+              class="w-32 rounded-md border-gray-300 text-xs focus:border-brand-500 focus:ring-brand-500"
+            />
+            <input
+              v-model="item.imageUrl"
+              placeholder="Image URL"
+              class="flex-1 rounded-md border-gray-300 text-xs focus:border-brand-500 focus:ring-brand-500"
+            />
           </div>
-          <p v-if="item.description" class="text-xs text-gray-500">{{ item.description }}</p>
+          <input
+            v-model="item.description"
+            placeholder="Description"
+            class="w-full rounded-md border-gray-300 text-xs focus:border-brand-500 focus:ring-brand-500"
+          />
           <p v-if="item.price" class="text-xs text-gray-400">
             Subtotal: {{ (item.price * item.quantity).toFixed(2) }}
           </p>
