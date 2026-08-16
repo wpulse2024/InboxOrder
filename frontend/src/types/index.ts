@@ -10,6 +10,11 @@ export interface OrderItem {
   product: string;
   quantity: number;
   price?: number;
+  subtotal?: number;
+  description?: string;
+  sku?: string;
+  category?: string;
+  imageUrl?: string;
 }
 
 export interface Order {

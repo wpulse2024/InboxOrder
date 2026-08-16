@@ -8,4 +8,7 @@ export const settingsApi = {
   getPendingFacebookPages: () => apiClient.get('/settings/facebook/oauth/pending'),
   selectFacebookPages: (pageIds: string[]) =>
     apiClient.post('/settings/facebook/oauth/select', { pageIds }),
+
+  connectGrok: (apiKey: string) => apiClient.post('/settings/ai/grok', { apiKey }),
+  disconnectGrok: () => apiClient.delete('/settings/ai/grok'),
 };

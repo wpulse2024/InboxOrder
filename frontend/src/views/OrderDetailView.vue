@@ -22,21 +22,50 @@
     <!-- Parsed items -->
     <div class="bg-white rounded-xl shadow-sm p-5 space-y-3">
       <h2 class="text-sm font-semibold text-gray-700">Order Items</h2>
-      <div v-for="(item, i) in editableItems" :key="i" class="flex gap-3 items-center">
-        <input
-          v-model="item.product"
-          class="flex-1 rounded-md border-gray-300 text-sm focus:border-brand-500 focus:ring-brand-500"
-          placeholder="Product"
+      <div v-for="(item, i) in editableItems" :key="i" class="flex gap-3 rounded-md border border-gray-200 p-3">
+        <img
+          v-if="item.imageUrl"
+          :src="item.imageUrl"
+          class="w-14 h-14 rounded-md object-cover shrink-0 border border-gray-200"
+          alt=""
         />
-        <input
-          v-model.number="item.quantity"
-          type="number"
-          min="1"
-          class="w-20 rounded-md border-gray-300 text-sm focus:border-brand-500 focus:ring-brand-500"
-          placeholder="Qty"
-        />
+        <div class="flex-1 space-y-2">
+          <div class="flex gap-3 items-center">
+            <input
+              v-model="item.product"
+              class="flex-1 rounded-md border-gray-300 text-sm focus:border-brand-500 focus:ring-brand-500"
+              placeholder="Product"
+            />
+            <input
+              v-model.number="item.quantity"
+              type="number"
+              min="1"
+              class="w-20 rounded-md border-gray-300 text-sm focus:border-brand-500 focus:ring-brand-500"
+              placeholder="Qty"
+            />
+            <input
+              v-model.number="item.price"
+              type="number"
+              min="0"
+              step="0.01"
+              class="w-24 rounded-md border-gray-300 text-sm focus:border-brand-500 focus:ring-brand-500"
+              placeholder="Price"
+            />
+          </div>
+          <div v-if="item.sku || item.category" class="flex gap-2 text-xs text-gray-500">
+            <span v-if="item.sku" class="rounded bg-gray-100 px-1.5 py-0.5">SKU: {{ item.sku }}</span>
+            <span v-if="item.category" class="rounded bg-gray-100 px-1.5 py-0.5">{{ item.category }}</span>
+          </div>
+          <p v-if="item.description" class="text-xs text-gray-500">{{ item.description }}</p>
+          <p v-if="item.price" class="text-xs text-gray-400">
+            Subtotal: {{ (item.price * item.quantity).toFixed(2) }}
+          </p>
+        </div>
       </div>
       <button class="text-xs text-brand-600 hover:underline" @click="editableItems.push({ product: '', quantity: 1 })">+ Add item</button>
+      <p v-if="order.totalAmount" class="text-sm font-semibold text-gray-700 text-right">
+        Total: {{ order.totalAmount.toFixed(2) }}
+      </p>
     </div>
 
     <!-- Notes -->
@@ -96,7 +125,17 @@ async function saveChanges() {
   saving.value = true;
   try {
     const { data } = await ordersApi.saveCorrection(order.value._id, {
-      items: editableItems.value.filter((i) => i.product),
+      items: editableItems.value
+        .filter((i) => i.product)
+        .map((i) => ({
+          product: i.product,
+          quantity: i.quantity,
+          price: i.price,
+          description: i.description,
+          sku: i.sku,
+          category: i.category,
+          imageUrl: i.imageUrl,
+        })),
       notes: notes.value,
     });
     order.value = data;

@@ -102,13 +102,52 @@
           </details>
         </div>
       </div>
+
+      <!-- AI Sales Agent -->
+      <div class="bg-white rounded-xl shadow-sm p-5 space-y-4">
+        <h2 class="text-sm font-semibold text-gray-700">AI Sales Agent</h2>
+        <p class="text-sm text-gray-500">
+          Connect your own Groq API key to let an AI agent handle every conversation —
+          answering questions and taking orders — instead of the default fixed question flow.
+        </p>
+
+        <div v-if="grokEnabled" class="flex items-center justify-between gap-3 rounded-md border border-gray-200 px-3 py-2">
+          <span class="text-sm text-green-700">Grok API key configured ✓</span>
+          <button
+            class="text-xs text-red-600 hover:underline"
+            :disabled="grokSaving"
+            @click="disconnectGrok"
+          >
+            {{ grokSaving ? 'Removing…' : 'Remove' }}
+          </button>
+        </div>
+        <div v-else class="space-y-2">
+          <input
+            v-model="grokApiKey"
+            type="password"
+            placeholder="gsk_..."
+            class="w-full rounded-md border-gray-300 text-sm focus:border-brand-500 focus:ring-brand-500"
+          />
+          <button
+            class="btn-primary text-sm"
+            :disabled="grokSaving || !grokApiKey"
+            @click="connectGrok"
+          >
+            {{ grokSaving ? 'Saving…' : 'Save API key' }}
+          </button>
+        </div>
+
+        <RouterLink to="/store-profile" class="inline-block text-sm text-brand-600 hover:underline">
+          Manage store profile (business info, products, FAQs) →
+        </RouterLink>
+      </div>
     </template>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
+import { RouterLink, useRoute, useRouter } from 'vue-router';
 import { settingsApi } from '@/api/settings';
 import { facebookApi, type ConnectedPage } from '@/api/facebook';
 
@@ -128,6 +167,9 @@ const pages = ref<ConnectedPage[]>([]);
 const pendingPages = ref<{ pageId: string; pageName: string }[]>([]);
 const selectedPageIds = ref<string[]>([]);
 const banner = ref<{ type: 'success' | 'error'; text: string } | null>(null);
+const grokEnabled = ref(false);
+const grokApiKey = ref('');
+const grokSaving = ref(false);
 
 const OAUTH_ERROR_MESSAGES: Record<string, string> = {
   access_denied: 'Facebook login was cancelled.',
@@ -147,6 +189,28 @@ onMounted(async () => {
 async function loadSettings() {
   const { data } = await settingsApi.get();
   form.value = { ...(data as { settings: typeof form.value }).settings };
+  grokEnabled.value = (data as { grokEnabled?: boolean }).grokEnabled ?? false;
+}
+
+async function connectGrok() {
+  grokSaving.value = true;
+  try {
+    await settingsApi.connectGrok(grokApiKey.value);
+    grokApiKey.value = '';
+    grokEnabled.value = true;
+  } finally {
+    grokSaving.value = false;
+  }
+}
+
+async function disconnectGrok() {
+  grokSaving.value = true;
+  try {
+    await settingsApi.disconnectGrok();
+    grokEnabled.value = false;
+  } finally {
+    grokSaving.value = false;
+  }
 }
 
 async function loadPages() {

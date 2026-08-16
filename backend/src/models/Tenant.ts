@@ -6,6 +6,7 @@ export interface ITenant extends Document {
   accessToken: string; // encrypted at rest
   webhookVerifyToken: string;
   isActive: boolean;
+  grokApiKeyEncrypted: string | null; // per-tenant Grok/xAI key, encrypted at rest — presence enables the AI sales agent
   settings: {
     autoConfirmOrders: boolean;
     aiParserEnabled: boolean;
@@ -23,6 +24,7 @@ const tenantSchema = new Schema<ITenant>(
     accessToken: { type: String, required: false, default: '' },
     webhookVerifyToken: { type: String, required: true },
     isActive: { type: Boolean, default: true, index: true },
+    grokApiKeyEncrypted: { type: String, default: null },
     settings: {
       autoConfirmOrders: { type: Boolean, default: false },
       aiParserEnabled: { type: Boolean, default: true },

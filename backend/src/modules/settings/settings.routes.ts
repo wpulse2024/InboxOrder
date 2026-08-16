@@ -13,6 +13,8 @@ router.get('/', asyncHandler(ctrl.getSettings));
 router.patch('/', asyncHandler(ctrl.updateSettings));
 router.post('/facebook/connect', asyncHandler(ctrl.connectFacebook));
 router.delete('/facebook/disconnect', asyncHandler(ctrl.disconnectFacebook));
+router.post('/ai/grok', asyncHandler(ctrl.connectGrok));
+router.delete('/ai/grok', asyncHandler(ctrl.disconnectGrok));
 
 router.get('/facebook/oauth/start', asyncHandler(oauthCtrl.startFacebookOAuth));
 router.get('/facebook/oauth/pending', asyncHandler(oauthCtrl.getPendingPages));

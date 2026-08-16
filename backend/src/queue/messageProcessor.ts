@@ -1,11 +1,8 @@
 import { Message } from '../models/Message';
 import { Tenant } from '../models/Tenant';
 import { ParsedOrder } from '../models/ParsedOrder';
-import { Order } from '../models/Order';
-import { findOrCreateCustomer, incrementOrderCount } from '../modules/customers/customers.repository';
 import { hybridParse } from '../parser/hybridParser';
-import { emitOrderNew } from '../realtime/emitters';
-import { createNotification } from '../modules/notifications/notifications.service';
+import { routeConversationMessage } from '../modules/conversation/conversationRouter';
 import { logger } from '../utils/logger';
 
 export async function processMessage(messageId: string, tenantId: string): Promise<void> {
@@ -31,6 +28,7 @@ export async function processMessage(messageId: string, tenantId: string): Promi
     aiEnabled
   );
 
+  // Saved unconditionally regardless of intent — see CLAUDE.md constraint #3.
   await ParsedOrder.create({
     tenantId,
     messageId: message._id,
@@ -44,37 +42,19 @@ export async function processMessage(messageId: string, tenantId: string): Promi
     rawText: message.text,
   });
 
-  if (result.intent !== 'order') {
-    await Message.updateOne({ _id: messageId }, { processed: true });
-    return;
-  }
+  const recipient = (message.rawPayload as { recipient?: { id?: string } })?.recipient;
+  const pageId = recipient?.id ?? null;
 
-  const customer = await findOrCreateCustomer(tenantId, message.senderId, message.senderId);
-
-  if (result.phone) await customer.updateOne({ phone: result.phone });
-  if (result.address) await customer.updateOne({ address: result.address });
-
-  const order = await Order.create({
+  await routeConversationMessage({
     tenantId,
-    customerId: customer._id,
-    messageId: message._id,
-    status: tenant.settings.autoConfirmOrders ? 'confirmed' : 'pending',
-    items: result.product
-      ? [{ product: result.product, quantity: result.quantity ?? 1 }]
-      : [],
+    tenant,
+    pageId,
+    senderId: message.senderId,
+    text: message.text,
+    messageId: message._id.toString(),
+    parseResult: result,
     parsedBy: source,
   });
 
-  await incrementOrderCount(customer._id.toString());
   await Message.updateOne({ _id: messageId }, { processed: true });
-
-  emitOrderNew(tenantId, order.toObject());
-  await createNotification(
-    tenantId,
-    'order:new',
-    `New order from ${customer.name || message.senderId}`,
-    { orderId: order._id.toString() }
-  );
-
-  logger.info({ orderId: order._id, source, confidence: result.confidence }, 'Order created');
 }

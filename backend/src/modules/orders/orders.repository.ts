@@ -72,10 +72,38 @@ export async function updateOrderStatus(
   return order;
 }
 
+/**
+ * System/bot-driven cancellation — no dashboard user involved, so `changedBy`
+ * is left unset. Used when a customer chooses to replace an existing order
+ * via the conversational Messenger flow; the admin reviews/finalizes later.
+ */
+export async function cancelOrderBySystem(
+  orderId: string,
+  tenantId: string,
+  note: string
+): Promise<IOrder | null> {
+  const order = await Order.findOne({ _id: orderId, tenantId });
+  if (!order) return null;
+
+  const fromStatus = order.status;
+  order.status = 'cancelled';
+  await order.save();
+
+  await OrderStatusHistory.create({
+    tenantId,
+    orderId,
+    fromStatus,
+    toStatus: 'cancelled',
+    note,
+  });
+
+  return order;
+}
+
 export async function saveCorrection(
   orderId: string,
   tenantId: string,
-  corrections: Partial<Pick<IOrder, 'items' | 'notes'>>
+  corrections: Partial<Pick<IOrder, 'items' | 'notes' | 'totalAmount'>>
 ): Promise<IOrder | null> {
   return Order.findOneAndUpdate(
     { _id: orderId, tenantId },

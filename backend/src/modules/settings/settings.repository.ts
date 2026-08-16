@@ -1,7 +1,22 @@
 import { Tenant, ITenant } from '../../models/Tenant';
 
-export async function findTenantById(tenantId: string) {
-  return Tenant.findById(tenantId).select('-accessToken').lean();
+export interface TenantSettingsView {
+  _id: ITenant['_id'];
+  name: string;
+  pageId: string;
+  webhookVerifyToken: string;
+  isActive: boolean;
+  settings: ITenant['settings'];
+  grokEnabled: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export async function findTenantById(tenantId: string): Promise<TenantSettingsView | null> {
+  const tenant = await Tenant.findById(tenantId).select('-accessToken').lean();
+  if (!tenant) return null;
+  const { grokApiKeyEncrypted, accessToken: _accessToken, ...rest } = tenant;
+  return { ...rest, grokEnabled: !!grokApiKeyEncrypted };
 }
 
 export async function updateTenant(
@@ -39,4 +54,18 @@ export async function clearPageConnection(tenantId: string): Promise<void> {
   await Tenant.findByIdAndUpdate(tenantId, {
     $set: { pageId: `disconnected_${Date.now()}`, accessToken: '' },
   });
+}
+
+export async function updateGrokKey(tenantId: string, encryptedApiKey: string) {
+  return Tenant.findByIdAndUpdate(
+    tenantId,
+    { $set: { grokApiKeyEncrypted: encryptedApiKey } },
+    { new: true }
+  )
+    .select('-accessToken -grokApiKeyEncrypted')
+    .lean();
+}
+
+export async function clearGrokKey(tenantId: string): Promise<void> {
+  await Tenant.findByIdAndUpdate(tenantId, { $set: { grokApiKeyEncrypted: null } });
 }

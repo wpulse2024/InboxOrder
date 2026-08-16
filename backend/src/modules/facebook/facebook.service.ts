@@ -1,4 +1,5 @@
 import { IFacebookPage } from '../../models/FacebookPage';
+import { Tenant } from '../../models/Tenant';
 import { encrypt, decrypt } from '../../utils/crypto';
 import { AppError } from '../../middleware/errorHandler';
 import { logger } from '../../utils/logger';
@@ -67,6 +68,23 @@ export async function getDecryptedToken(tenantId: string, pageId: string): Promi
     throw new AppError('Page not found or token missing', 404);
   }
   return decrypt(page.accessToken);
+}
+
+/**
+ * Resolves a usable outbound page access token for sending Messenger replies.
+ * Tries the multi-page FacebookPage model first, then falls back to the
+ * legacy single-page token stored directly on the Tenant document.
+ */
+export async function getSendToken(tenantId: string, pageId: string): Promise<string> {
+  try {
+    return await getDecryptedToken(tenantId, pageId);
+  } catch {
+    const tenant = await Tenant.findById(tenantId);
+    if (tenant?.pageId === pageId && tenant.accessToken) {
+      return decrypt(tenant.accessToken);
+    }
+    throw new AppError('No access token available for this page', 404);
+  }
 }
 
 /** Used by webhook challenge verification to resolve a per-page verify token. */

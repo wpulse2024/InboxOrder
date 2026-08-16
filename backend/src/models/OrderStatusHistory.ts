@@ -6,7 +6,7 @@ export interface IOrderStatusHistory extends Document {
   orderId: Types.ObjectId;
   fromStatus: OrderStatus;
   toStatus: OrderStatus;
-  changedBy: Types.ObjectId; // User._id (dashboard user who made the change)
+  changedBy?: Types.ObjectId; // User._id — unset when the change was system/bot-driven, not a dashboard user
   note?: string;
   createdAt: Date;
 }
@@ -25,7 +25,7 @@ const orderStatusHistorySchema = new Schema<IOrderStatusHistory>(
       enum: ['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled'],
       required: true,
     },
-    changedBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    changedBy: { type: Schema.Types.ObjectId, ref: 'User' },
     note: { type: String },
   },
   // History is append-only; no updatedAt needed

@@ -44,7 +44,17 @@ export async function updateStatus(req: Request, res: Response): Promise<void> {
 
 const correctionSchema = z.object({
   items: z
-    .array(z.object({ product: z.string(), quantity: z.number().min(1), price: z.number().optional() }))
+    .array(
+      z.object({
+        product: z.string(),
+        quantity: z.number().min(1),
+        price: z.number().optional(),
+        description: z.string().max(500).optional(),
+        sku: z.string().max(60).optional(),
+        category: z.string().max(100).optional(),
+        imageUrl: z.string().max(1000).optional(),
+      })
+    )
     .optional(),
   notes: z.string().optional(),
 });

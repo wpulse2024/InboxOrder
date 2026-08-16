@@ -32,7 +32,15 @@ export async function saveCorrection(
   tenantId: string,
   corrections: Parameters<typeof repo.saveCorrection>[2]
 ) {
-  const order = await repo.saveCorrection(orderId, tenantId, corrections);
+  const items = corrections.items?.map((item) => ({
+    ...item,
+    subtotal: item.price !== undefined ? item.price * item.quantity : undefined,
+  }));
+  const totalAmount = items?.every((i) => i.subtotal !== undefined)
+    ? items.reduce((sum, i) => sum + (i.subtotal ?? 0), 0)
+    : undefined;
+
+  const order = await repo.saveCorrection(orderId, tenantId, { ...corrections, items, totalAmount });
   if (!order) throw new AppError('Order not found', 404);
   return order;
 }

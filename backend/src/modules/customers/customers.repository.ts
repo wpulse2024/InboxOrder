@@ -46,3 +46,17 @@ export async function findOrCreateCustomer(
 export async function incrementOrderCount(customerId: string): Promise<void> {
   await Customer.updateOne({ _id: customerId }, { $inc: { totalOrders: 1 } });
 }
+
+/** Writes collected conversation-flow fields onto the Customer doc. Skips unset fields. */
+export async function updateCustomerDetails(
+  customerId: string,
+  fields: { name?: string; phone?: string; address?: string; email?: string }
+): Promise<void> {
+  const update: Record<string, unknown> = {};
+  if (fields.name) update.name = fields.name;
+  if (fields.phone) update.phone = fields.phone;
+  if (fields.address) update.address = fields.address;
+  if (fields.email) update.email = fields.email;
+  if (Object.keys(update).length === 0) return;
+  await Customer.updateOne({ _id: customerId }, update);
+}

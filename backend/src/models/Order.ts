@@ -12,6 +12,11 @@ export interface IOrderItem {
   product: string;
   quantity: number;
   price?: number;
+  subtotal?: number;
+  description?: string;
+  sku?: string;
+  category?: string;
+  imageUrl?: string;
 }
 
 export interface IOrder extends Document {
@@ -48,6 +53,11 @@ const orderSchema = new Schema<IOrder>(
         product: { type: String, required: true },
         quantity: { type: Number, required: true, min: 1 },
         price: { type: Number, min: 0 },
+        subtotal: { type: Number, min: 0 },
+        description: { type: String, maxlength: 500 },
+        sku: { type: String, maxlength: 60 },
+        category: { type: String, maxlength: 100 },
+        imageUrl: { type: String, maxlength: 1000 },
       },
     ],
     totalAmount: { type: Number, min: 0 },

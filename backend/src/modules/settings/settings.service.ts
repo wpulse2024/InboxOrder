@@ -40,3 +40,15 @@ export async function disconnectFacebook(tenantId: string) {
   await repo.clearPageConnection(tenantId);
   return { message: 'Facebook page disconnected' };
 }
+
+export async function connectGrok(tenantId: string, apiKey: string) {
+  const encrypted = encrypt(apiKey);
+  const tenant = await repo.updateGrokKey(tenantId, encrypted);
+  if (!tenant) throw new AppError('Tenant not found', 404);
+  return { message: 'Grok API key connected' };
+}
+
+export async function disconnectGrok(tenantId: string) {
+  await repo.clearGrokKey(tenantId);
+  return { message: 'Grok API key disconnected' };
+}

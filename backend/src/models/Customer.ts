@@ -7,6 +7,7 @@ export interface ICustomer extends Document {
   name: string;
   phone?: string;
   address?: string;
+  email?: string;
   totalOrders: number;       // denormalized counter for fast listing
   lastMessageAt?: Date;      // last interaction timestamp for activity sorting
   createdAt: Date;
@@ -20,6 +21,7 @@ const customerSchema = new Schema<ICustomer>(
     name: { type: String, required: true },
     phone: { type: String },
     address: { type: String },
+    email: { type: String },
     totalOrders: { type: Number, default: 0, min: 0 },
     lastMessageAt: { type: Date },
   },

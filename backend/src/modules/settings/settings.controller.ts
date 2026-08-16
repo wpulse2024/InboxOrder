@@ -40,3 +40,18 @@ export async function disconnectFacebook(req: Request, res: Response): Promise<v
   const result = await settingsService.disconnectFacebook(req.user!.tenantId);
   res.json(result);
 }
+
+const grokConnectSchema = z.object({
+  apiKey: z.string().min(1).max(200),
+});
+
+export async function connectGrok(req: Request, res: Response): Promise<void> {
+  const { apiKey } = grokConnectSchema.parse(req.body);
+  const result = await settingsService.connectGrok(req.user!.tenantId, apiKey);
+  res.json(result);
+}
+
+export async function disconnectGrok(req: Request, res: Response): Promise<void> {
+  const result = await settingsService.disconnectGrok(req.user!.tenantId);
+  res.json(result);
+}

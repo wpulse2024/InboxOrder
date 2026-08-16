@@ -15,6 +15,7 @@ import notificationsRoutes from './modules/notifications/notifications.routes';
 import facebookRoutes from './modules/facebook/facebook.routes';
 import facebookOAuthPublicRoutes from './modules/settings/facebookOAuthPublic.routes';
 import adminRoutes from './modules/admin/admin.routes';
+import storeProfileRoutes from './modules/storeProfile/storeProfile.routes';
 
 export function createApp() {
   const app = express();
@@ -26,7 +27,7 @@ export function createApp() {
       // Read on every request (not captured at boot) so an admin-updated frontendUrl
       // takes effect immediately — see config/platformConfig.ts.
       origin: (_origin, callback) => callback(null, getPlatformConfig().frontendUrl ?? '*'),
-      methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
+      methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
       allowedHeaders: ['Content-Type', 'Authorization'],
     })
   );
@@ -61,6 +62,7 @@ export function createApp() {
   app.use('/api/facebook', facebookRoutes);
   app.use('/api/facebook-oauth', facebookOAuthPublicRoutes);
   app.use('/api/admin', adminRoutes);
+  app.use('/api/store-profile', storeProfileRoutes);
 
   // Global error handler — must be last
   app.use(errorHandler);

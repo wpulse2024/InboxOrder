@@ -38,3 +38,6 @@ docker/volumes/
 
 # Coverage
 coverage/
+
+# Playwright MCP debug snapshots
+.playwright-mcp/

@@ -29,6 +29,14 @@ const envSchema = z.object({
   AI_MODEL: z.string().default('claude-haiku-4-5-20251001'),
   AI_TIMEOUT_MS: z.string().default('10000'),
 
+  // Groq (api.groq.com, OpenAI-compatible): used by the per-tenant AI sales agent. No
+  // platform-wide API key here — each tenant supplies their own key via /settings,
+  // encrypted on Tenant.grokApiKeyEncrypted. (Field/var names kept as "grok" from the
+  // original xAI-Grok naming — Groq's API shape is identical OpenAI-style tool-calling.)
+  GROK_API_URL: z.string().url().default('https://api.groq.com/openai/v1/chat/completions'),
+  GROK_MODEL: z.string().default('llama-3.3-70b-versatile'),
+  GROK_TIMEOUT_MS: z.string().default('20000'),
+
   // One-time bootstrap only: on boot, if set, grants isPlatformAdmin to the matching user
   // (if they exist) so there's a first admin able to reach /admin/config. Safe to leave in
   // .env permanently — it's idempotent — or remove after the first successful boot.
@@ -66,6 +74,10 @@ export const env = {
   aiApiUrl: parsed.data.AI_API_URL,
   aiModel: parsed.data.AI_MODEL,
   aiTimeoutMs: parseInt(parsed.data.AI_TIMEOUT_MS, 10),
+
+  grokApiUrl: parsed.data.GROK_API_URL,
+  grokModel: parsed.data.GROK_MODEL,
+  grokTimeoutMs: parseInt(parsed.data.GROK_TIMEOUT_MS, 10),
 
   platformAdminBootstrapEmail: parsed.data.PLATFORM_ADMIN_BOOTSTRAP_EMAIL ?? null,
 } as const;

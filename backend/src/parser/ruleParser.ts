@@ -61,16 +61,16 @@ const ADDRESS_PATTERNS: RegExp[] = [
 // ── Product ───────────────────────────────────────────────────────────────────
 // Patterns tried in order; first non-trivial capture wins.
 const PRODUCT_PATTERNS: RegExp[] = [
+  // "N টা/pcs/ta X" — quantity precedes product (includes romanised "ta"/"ti")
+  /\d+\s*(?:টা|টি|পিস|pcs|pieces?|ta|ti)\s+([a-zA-Z\u0980-\u09FF][a-zA-Z\u0980-\u09FF\s]{1,40}?)(?=\s+order\b|\s+korte\b|\s+(?:চাই|নিব|নেব|কিনব|কিনবো|লাগবে|দিন|দাও|দিবেন|পাঠান)(?![a-zA-Zঀ-৿])|\s*[,।]|\s*$)/i,
   // After "order" / "অর্ডার" keyword
   /(?:order|অর্ডার)\s+(?:for\s+)?([a-zA-Z\u0980-\u09FF][a-zA-Z\u0980-\u09FF\s]{1,40}?)(?=\s*\d|\s*টা|\s*টি|\s*pcs|\s*[,।]|\s*$)/i,
   // "X চাই / নিব / নেব / কিনব / লাগবে"
-  /([a-zA-Z\u0980-\u09FF][a-zA-Z\u0980-\u09FF\s]{1,40}?)\s+(?:চাই|নিব|নেব|কিনব|কিনবো|লাগবে)\b/,
+  /([a-zA-Z\u0980-\u09FF][a-zA-Z\u0980-\u09FF\s]{1,40}?)\s+(?:চাই|নিব|নেব|কিনব|কিনবো|লাগবে)(?![a-zA-Zঀ-৿])/,
   // "X দিন / দাও / দিবেন / পাঠান"
-  /([a-zA-Z\u0980-\u09FF][a-zA-Z\u0980-\u09FF\s]{1,40}?)\s+(?:দিন|দাও|দিবেন|পাঠান)\b/,
+  /([a-zA-Z\u0980-\u09FF][a-zA-Z\u0980-\u09FF\s]{1,40}?)\s+(?:দিন|দাও|দিবেন|পাঠান)(?![a-zA-Zঀ-৿])/,
   // "want / need / buy / get [a/an/some] X"
-  /(?:want|need|buy|get)\s+(?:a\s+|an\s+|some\s+)?([a-zA-Z][a-zA-Z\s]{1,40}?)(?=\s*\d|\s*pcs|\s*[,.]|\s+(?:please|from|for)|\s*$)/i,
-  // "N টা/pcs/ta X" — quantity precedes product (includes romanised "ta"/"ti")
-  /\d+\s*(?:টা|টি|পিস|pcs|pieces?|ta|ti)\s+([a-zA-Z\u0980-\u09FF][a-zA-Z\u0980-\u09FF\s]{1,40}?)(?=\s+order\b|\s+korte\b|\s*[,।]|\s*$)/i,
+  /(?:want|need|buy|get)\s+(?:to\s+(?:buy|order|purchase|get)\s+)?(?:a\s+|an\s+|some\s+)?([a-zA-Z][a-zA-Z\s]{1,40}?)(?=\s*\d|\s*pcs|\s*[,.]|\s+(?:please|from|for)|\s*$)/i,
 ];
 
 // ── Main parser ───────────────────────────────────────────────────────────────

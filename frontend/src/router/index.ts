@@ -58,6 +58,11 @@ const router = createRouter({
           component: () => import('@/views/SettingsView.vue'),
         },
         {
+          path: 'store-profile',
+          name: 'store-profile',
+          component: () => import('@/views/StoreProfileView.vue'),
+        },
+        {
           path: 'admin/config',
           name: 'admin-config',
           component: () => import('@/views/AdminConfigView.vue'),
